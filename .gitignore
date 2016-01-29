@@ -49,3 +49,4 @@ Temporary Items
 # Large files
 *.csv
 .Rhistory
+.RData
