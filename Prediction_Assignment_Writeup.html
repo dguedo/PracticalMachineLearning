@@ -64,7 +64,88 @@ img {
 </div>
 
 
-
+<div id="course-project" class="section level1">
+<h1>Course Project</h1>
+</div>
+<div id="section" class="section level1">
+<h1>————————–</h1>
+<div id="loading-libraries" class="section level2">
+<h2>loading libraries</h2>
+<p>library(RCurl) library(caret) library(randomForest) # – set.seed(3510)</p>
+</div>
+<div id="securing-the-data" class="section level2">
+<h2>Securing the Data</h2>
+<p>setwd(“~/GitHub/PracticalMachineLearning”) trainingURL &lt;- “<a href="https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv" class="uri">https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv</a>” testingURL &lt;- “<a href="https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv" class="uri">https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv</a>”</p>
+<p>download.file(trainingURL ,destfile=“pml-training.csv”,method=“libcurl”) download.file(testingURL ,destfile=“pml-testing.csv”,method=“libcurl”)</p>
+<p>trainingData = read.csv(“pml-training.csv”) testingSet = read.csv(“pml-testing.csv”)</p>
+</div>
+</div>
+<div id="remove-the-sequential-columns-and-names" class="section level1">
+<h1>Remove the sequential columns and names</h1>
+<p>rem.idx &lt;- c(1,2,3,4,5,6) trainingData &lt;- trainingData[, -rem.idx] testingSet &lt;- testingSet[, -rem.idx]</p>
+<div id="creating-the-training-set-partitions" class="section level2">
+<h2>Creating the training set partitions</h2>
+<p>inTrain &lt;- createDataPartition(trainingData$classe, p = 0.70, list = FALSE) training &lt;- trainingData[inTrain, ] testing &lt;- trainingData[-inTrain, ] # dim(training); dim(testing)</p>
+</div>
+<div id="cleaning-the-data" class="section level2">
+<h2>Cleaning the data</h2>
+</div>
+</div>
+<div id="remove-the-near-zero-values" class="section level1">
+<h1>remove the near zero values</h1>
+<p>nearZero &lt;- nearZeroVar(training) training &lt;- training[, -nearZero] testing &lt;- testing[, -nearZero] # removed 55 columns</p>
+</div>
+<div id="remove-na-columns-where-over-90-of-the-values-are-na" class="section level1">
+<h1>remove NA columns, where over 90% of the values are NA</h1>
+<p>training &lt;- training[,colSums(is.na(training)) &lt; nrow(training)*0.9] testing &lt;- testing[,colSums(is.na(testing)) &lt; nrow(testing)*0.9]</p>
+<div id="models" class="section level2">
+<h2>models</h2>
+</div>
+</div>
+<div id="k-fold-cross-validation-10-fold" class="section level1">
+<h1>K-fold cross-validation (10 fold)</h1>
+<p>fitControl &lt;- trainControl(method = “cv”, number = 5)</p>
+<div id="boost" class="section level2">
+<h2>3. Boost</h2>
+<p>modelGbm &lt;- train(classe ~ .,data=training, method=“gbm”, trControl = fitControl, verbose = FALSE) predictGbm &lt;- predict(modelGbm, testing, type = “class”) # – confusionMatrix(predictGbm, testing$classe)</p>
+</div>
+<div id="random-forrest" class="section level2">
+<h2>Random Forrest</h2>
+</div>
+</div>
+<div id="modelrf---trainclasse-.datatraining-methodrf" class="section level1">
+<h1>modelRf &lt;- train(classe ~ .,data=training, method=“rf”)</h1>
+<p>modelRf &lt;- randomForest(classe ~ ., data=training) predictRF &lt;- predict(modelRf, testing, type = “class”) # – confusionMatrix(predictRF, testing$classe)</p>
+</div>
+<div id="printrf_modelfinalmodel" class="section level1">
+<h1>print(rf_model$finalModel)</h1>
+<div id="results" class="section level2">
+<h2>Results</h2>
+<p>confusionMatrix(predictGbm, testing<span class="math">\(classe)\)</span>overall[1] confusionMatrix(predictRF, testing<span class="math">\(classe)\)</span>overall[1]</p>
+</div>
+<div id="apply-to-test-set" class="section level2">
+<h2>apply to test set</h2>
+</div>
+</div>
+<div id="remove-the-near-zero-values-1" class="section level1">
+<h1>remove the near zero values</h1>
+</div>
+<div id="testingset---testingset--nearzero" class="section level1">
+<h1>testingSet &lt;- testingSet[, -nearZero]</h1>
+</div>
+<div id="testingset---testingsetcolsumsis.natestingset-nrowtestingset0.9" class="section level1">
+<h1>testingSet &lt;- testingSet[,colSums(is.na(testingSet)) &lt; nrow(testingSet)*0.9]</h1>
+<p>predictionFinal &lt;- predict(modelRf, testingSet, type = “class”) predictionFinal</p>
+<div id="conclusion" class="section level2">
+<h2>Conclusion</h2>
+</div>
+</div>
+<div id="section-1" class="section level1">
+<h1>1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20</h1>
+</div>
+<div id="b-a-b-a-a-e-d-b-a-a-b-c-b-a-e-e-a-b-b-b" class="section level1">
+<h1>B A B A A E D B A A B C B A E E A B B B</h1>
+</div>
 
 
 </div>
