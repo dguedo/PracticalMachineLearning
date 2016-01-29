@@ -1,0 +1,4 @@
+---
+title: "Practical Machine Learning: Prediction Assignment"
+output: html_document
+---
