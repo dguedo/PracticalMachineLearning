@@ -1,6 +1,8 @@
 ---
 title: "Practical Machine Learning: Prediction Assignment Writeup"
-output: html_document
+output: 
+  html_document:
+    keep_md: true
 ---
 
 ## Overview
@@ -96,7 +98,7 @@ I applied two models to this classification problem, those being boosting and ra
 
 By default, simple bootstrap resampling is used, instead I opted for K-fold cross-validation.
 
-```{r gbm, cache=TRUE, warning=FALSE, message=FALSE}
+```{r gbm, cache=TRUE, warning=FALSE}
 # K-fold cross-validation (5 fold)
 fitControl  <- trainControl(method = "cv", number = 5)
 modelGbm    <- train(classe ~ .,data=training, method="gbm", trControl = fitControl, verbose = FALSE)
@@ -106,7 +108,7 @@ confusionMatrix(predictGbm, testing$classe)
 ```
 
 **2. Random Forrest**
-```{r rf, cache=TRUE, warning=FALSE, message=FALSE}
+```{r rf, cache=TRUE, warning=FALSE}
 modelRf   <- randomForest(classe ~ ., data=training)
 predictRF <- predict(modelRf, testing, type = "class")
 
