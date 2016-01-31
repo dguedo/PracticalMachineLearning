@@ -1,81 +1,142 @@
-# Course Project
-# --------------------------
+---
+title: "Practical Machine Learning: Prediction Assignment Writeup"
+output: html_document
+---
 
-## loading libraries
+## Overview
+This is the course project for the Practical Machine Learning.
+
+The goal of the project was to predict the manner in which a group of subjects performed exercises, these were denoted by the "classe" variable. 
+
+The following sections describe my methods for determining the final model.
+
+## Libraries
+
+Load the necessary libraries and set the seed
+
+```{r libraries, warning=FALSE, message=FALSE}
 library(RCurl)
 library(caret)
 library(randomForest)
-# --
-set.seed(3510)
 
-## Securing the Data
+set.seed(3510)
+```
+
+## Securing the Data and Preliminary Analyses
+
+**1. Load and assign the datasets**
+
+```{r download, cache=TRUE}
+# set the working directory
 setwd("~/GitHub/PracticalMachineLearning")
+
+# Download the training and test sets
 trainingURL <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
 testingURL <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
 
 download.file(trainingURL ,destfile="pml-training.csv",method="libcurl")
 download.file(testingURL ,destfile="pml-testing.csv",method="libcurl")
 
+# Read in and assign the datasets 
 trainingData  = read.csv("pml-training.csv")
 testingSet    = read.csv("pml-testing.csv")
+```
 
-# Remove un-needed columns
-columnsToRemove <- c(1,2,3,4,5,6)
+**2. Remove un-needed columns **
+
+After profiling the training dataset using str(), Summary(), and head().  It became obvious that the first seven columns contained no data that would be relevant in the prediction model.  In fact, their inclusion might cause unintended consequences. 
+
+```{r removeColumns}
+columnsToRemove <- c(1,2,3,4,5,6,7)
+names(trainingData[, columnsToRemove])
+```
+
+```{r}
+# Remove the columns
 trainingData <- trainingData[, -columnsToRemove]
 testingSet <- testingSet[, -columnsToRemove]
+```
 
-## Creating the training set partitions
+## Partition the datasets
+
+Create the training and test set partitions
+
+```{r}
 inTrain   <- createDataPartition(trainingData$classe, p = 0.70, list = FALSE)
 training  <- trainingData[inTrain, ]
 testing   <- trainingData[-inTrain, ]
-# dim(training); dim(testing)
+```
 
 ## Cleaning the data
 
-# remove the near zero values
+**1. Remove the near zero values**
+
+I used nearZeroVar to remove near zero values.  In general terms, nearZeroVar detects variables that have only one unique value (i.e. are zero variance predictors) or predictors that are have very few unique values relative to the number of samples. 
+
+```{r}
 nearZero  <- nearZeroVar(training)
 training  <- training[, -nearZero]
 testing   <- testing[, -nearZero]
-# removed 55 columns
+```
 
-# remove NA columns, where over 90% of the values are NA
+**2. Remove mostly NA varibales**
+
+After looking at the data many of the columns contained high levels of NA's.  I removed any variable that value NA accounted for more than 90% of the observations.
+
+```{r}
 training  <- training[,colSums(is.na(training)) < nrow(training)*0.9]
 testing   <- testing[,colSums(is.na(testing)) < nrow(testing)*0.9]
+```
 
-## models
-# K-fold cross-validation (10 fold)
-fitControl <- trainControl(method = "cv", number = 5)
+## Model Building
 
-## 3. Boost
+I applied two models to this classification problem, those being boosting and random forest.
+
+**1. Boosted tree model**
+
+By default, simple bootstrap resampling is used, instead I opted for K-fold cross-validation.
+
+```{r gbm, cache=TRUE, warning=FALSE, message=FALSE}
+# K-fold cross-validation (5 fold)
+fitControl  <- trainControl(method = "cv", number = 5)
 modelGbm    <- train(classe ~ .,data=training, method="gbm", trControl = fitControl, verbose = FALSE)
 predictGbm  <- predict(modelGbm, testing)
-# --
+
 confusionMatrix(predictGbm, testing$classe)
+```
 
-## Random Forrest
-#modelRf   <- train(classe ~ .,data=training, method="rf")
-modelRf <- randomForest(classe ~ ., data=training)
+**2. Random Forrest**
+```{r rf, cache=TRUE, warning=FALSE, message=FALSE}
+modelRf   <- randomForest(classe ~ ., data=training)
 predictRF <- predict(modelRf, testing, type = "class")
-# --
+
 confusionMatrix(predictRF, testing$classe)
+```
 
-#print(rf_model$finalModel)
+## Model selection
 
-## Results
-confusionMatrix(predictGbm, testing$classe)$overall[1]
-confusionMatrix(predictRF, testing$classe)$overall[1]
+After comparing the accuracy and calculating the out of sample error for each model, I choose the random forest model.
 
-## apply to test set 
-# remove the near zero values
-#testingSet <- testingSet[, -nearZero]
-#testingSet <- testingSet[,colSums(is.na(testingSet)) < nrow(testingSet)*0.9]
+```{r}
+rfAcc   <- confusionMatrix(predictRF, testing$classe)$overall[1]
+gbmAcc  <- confusionMatrix(predictGbm, testing$classe)$overall[1]
 
+# The Out Sample Error (OOSE)
+rferr   <- (1 - confusionMatrix(predictRF, testing$classe)$overall[1])
+gbmerr  <- (1 - confusionMatrix(predictGbm, testing$classe)$overall[1])
 
+# put into a table for easy reading
+tbl = matrix( c(rfAcc, rferr, gbmAcc, gbmerr), ncol=2, byrow=TRUE)     
+colnames(tbl) <- c("Accuracy","OOSE")
+rownames(tbl) <- c("rf","gbm")
+as.table(tbl)
+```
+
+## Submission: Apply the algorithm to the 20 test cases
+
+having chosen the random forest model, for its higher accuracy and lower out-of-sample-error, I applied it to the 20 test cases.
+
+```{r}
 predictionFinal <- predict(modelRf, testingSet, type = "class")
 predictionFinal
-
-
-## Conclusion
-#1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 
-#B  A  B  A  A  E  D  B  A  A  B  C  B  A  E  E  A  B  B  B 
-
+```

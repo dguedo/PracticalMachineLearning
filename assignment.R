@@ -65,6 +65,26 @@ confusionMatrix(predictRF, testing$classe)
 confusionMatrix(predictGbm, testing$classe)$overall[1]
 confusionMatrix(predictRF, testing$classe)$overall[1]
 
+
+
+  
+  confusionMatrix(predictGbm, testing$classe)$overall[1]
+
+rfa <- confusionMatrix(predictRF, testing$classe)$overall[1]
+rfe <- 1 - confusionMatrix(predictRF, testing$classe)$overall[1]
+
+x = matrix( c(rfa, rfe, rfa, rfe), ncol=2, byrow=TRUE)     
+colnames(x) <- c("Acc","err")
+rownames(x) <- c("rf","gbm")
+smoke <- as.table(x)
+smoke
+
+# 
+# 1 - confusionMatrix(predictRF, testing$classe)$overall[1]
+# 
+# testing.count <- nrow(testing)
+# out.of.sample.error <- sum(testing$classe != predictRF) / testing.count
+
 ## apply to test set 
 # remove the near zero values
 #testingSet <- testingSet[, -nearZero]
